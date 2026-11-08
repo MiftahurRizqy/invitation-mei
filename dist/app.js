@@ -59,10 +59,22 @@ $('#open').addEventListener('click',()=>{
   $('#intro').tabIndex=-1;$('#intro').focus({preventScroll:true});
   window.scrollTo({top:$('#intro').getBoundingClientRect().top+window.scrollY,behavior:reducedMotion?'instant':'smooth'});
 });
-function syncPlayer(){document.querySelector('.music-card').classList.toggle('is-playing',!audio.paused);}
+function syncPlayer(){
+  const playing = !audio.paused;
+  document.querySelector('.music-card').classList.toggle('is-playing',playing);
+  const button = $('#music');
+  button.setAttribute('aria-label',playing ? 'Jeda musik' : 'Putar musik');
+  button.title = playing ? 'Jeda musik' : 'Putar musik';
+  button.querySelector('path').setAttribute('d',playing ? 'M8 6v12M16 6v12' : 'M7 5L18 12L7 19Z');
+}
 audio.addEventListener('play',syncPlayer);audio.addEventListener('pause',syncPlayer);
 let manuallyPaused = false;
-document.querySelector('#music').addEventListener('click',()=>{if(audio.paused){manuallyPaused=false;autoplayBlocked=false;audio.play().catch(()=>{autoplayBlocked=true;syncPlayer();});}else{manuallyPaused=true;audio.pause();}});
+document.querySelector('#music').addEventListener('click',event=>{
+  event.preventDefault(); event.stopPropagation();
+  if(audio.paused){manuallyPaused=false;audio.play().catch(()=>{autoplayBlocked=true;syncPlayer();});}
+  else{manuallyPaused=true;audio.autoplay=false;audio.pause();}
+  syncPlayer();
+});
 // Respect browser autoplay policy; retry only on a real first user gesture.
 audio.play().then(()=>{autoplayBlocked=false;}).catch(()=>{autoplayBlocked=true;syncPlayer();});
 function startOnGesture(event){
@@ -75,6 +87,7 @@ document.addEventListener('keydown',startOnGesture,{capture:true});
 document.addEventListener('touchend',startOnGesture,{capture:true,passive:true});
 document.addEventListener('click',startOnGesture,{capture:true});
 audio.addEventListener('timeupdate',()=>{const t=49+Math.floor(audio.currentTime);$('#elapsed').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');$('#music-progress').style.width=(audio.duration?audio.currentTime/audio.duration*100:0)+'%';});
+syncPlayer();
 audio.addEventListener('error',()=>{toast('Musik belum dapat dimuat. Coba muat ulang halaman.');syncPlayer();});
 $('#name').addEventListener('input',()=>$('#name').setCustomValidity(''));
 $('#copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText('0621849743');toast('Nomor rekening berhasil disalin');}catch{const input=document.createElement('textarea');input.value='0621849743';document.body.append(input);input.select();const copied=document.execCommand('copy');input.remove();toast(copied?'Nomor rekening berhasil disalin':'Nomor rekening: 0621849743');}});

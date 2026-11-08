@@ -1,1 +1,5 @@
 .sealed .hero .music-card #music{opacity:1;pointer-events:auto}
+.cover>#home .music-card #music{position:relative;z-index:10;opacity:1;pointer-events:auto;min-width:44px;min-height:44px;touch-action:manipulation}
+.cover>#home .music-card #music svg{color:var(--paper);pointer-events:none}
+.cover>#home .music-card #music svg path{d:revert;fill:none;stroke:currentColor;stroke-width:2.3}
+.cover>#home .music-card:not(.is-playing) #music svg path{fill:currentColor;stroke:none}
