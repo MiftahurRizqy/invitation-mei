@@ -1,0 +1,7 @@
+data/
+*.tmp
+.openai/
+.vercel/
+node_modules/
+.env*
+dist/assets/romansa.mp3

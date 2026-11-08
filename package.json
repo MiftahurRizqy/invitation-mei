@@ -1,0 +1,1 @@
+{"name":"invitation-mei","version":"1.0.0","private":true,"scripts":{"start":"node preview.cjs","test":"node --test comments.test.cjs"},"engines":{"node":"22.x"}}
