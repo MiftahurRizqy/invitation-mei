@@ -1,22 +1,28 @@
 const { randomUUID } = require('node:crypto');
 const choices = ['Aku hadir', 'Aku kabari lagi, ya', 'Maaf, aku belum bisa hadir'];
-const key = 'mei-najih:comments';
-async function redis(command) {
-  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
-  if (!url || !token) throw Object.assign(new Error('Database not configured'), {code:'DATABASE_NOT_CONFIGURED'});
-  const response = await fetch(url, {method:'POST', headers:{Authorization:`Bearer ${token}`, 'Content-Type':'application/json'}, body:JSON.stringify(command), signal:AbortSignal.timeout(8000)});
-  const data = await response.json();
-  if (!response.ok || data.error) throw new Error('Database request failed');
-  return data.result;
+const { neon } = require('@neondatabase/serverless');
+async function database() {
+  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  if (!url) throw Object.assign(new Error('Database not configured'), {code:'DATABASE_NOT_CONFIGURED'});
+  const sql = neon(url);
+  await sql`CREATE TABLE IF NOT EXISTS mei_najih_guestbook (
+    id UUID PRIMARY KEY,
+    request_id TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    message TEXT NOT NULL,
+    attendance TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )`;
+  return sql;
 }
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   if (!['GET','POST'].includes(req.method)) { res.setHeader('Allow','GET, POST'); return res.status(405).json({error:'Metode tidak didukung.'}); }
   try {
     if (req.method === 'GET') {
-      const rows = await redis(['ZREVRANGE',key,0,99]);
-      return res.status(200).json({comments:rows.map(row=>JSON.parse(row))});
+      const sql = await database();
+      const rows = await sql`SELECT id, name, message, attendance, created_at AS "createdAt" FROM mei_najih_guestbook ORDER BY created_at DESC, id DESC LIMIT 100`;
+      return res.status(200).json({comments:rows});
     }
     if (req.headers.origin && new URL(req.headers.origin).host !== req.headers.host) return res.status(403).json({error:'Asal permintaan tidak sesuai.'});
     if (!req.headers['content-type']?.startsWith('application/json')) return res.status(415).json({error:'Format tidak didukung.'});
@@ -25,10 +31,12 @@ module.exports = async (req, res) => {
     const name=body.name.trim(), message=body.message.trim();
     if (!name || name.length>100 || !message || message.length>1000) return res.status(400).json({error:'Nama maksimal 100 karakter dan ucapan maksimal 1.000 karakter.'});
     const comment={id:randomUUID(),name,message,attendance:body.attendance,createdAt:new Date().toISOString()};
-    // One atomic operation prevents duplicates when a submission is retried.
-    const script="local old=redis.call('GET',KEYS[2]); if old then return old end; redis.call('ZADD',KEYS[1],ARGV[1],ARGV[2]); redis.call('SET',KEYS[2],ARGV[2],'EX',604800); return ARGV[2]";
-    const saved=await redis(['EVAL',script,2,key,`${key}:request:${body.requestId}`,Date.now(),JSON.stringify(comment)]);
-    return res.status(201).json({comment:JSON.parse(saved)});
+    const sql = await database();
+    const [saved] = await sql`INSERT INTO mei_najih_guestbook (id, request_id, name, message, attendance)
+      VALUES (${comment.id}, ${body.requestId}, ${name}, ${message}, ${body.attendance})
+      ON CONFLICT (request_id) DO UPDATE SET request_id = EXCLUDED.request_id
+      RETURNING id, name, message, attendance, created_at AS "createdAt"`;
+    return res.status(201).json({comment:saved});
   } catch (error) {
     const code = error.code === 'DATABASE_NOT_CONFIGURED' ? error.code : 'DATABASE_UNAVAILABLE';
     console.error('Guestbook database status:', code);
