@@ -22,10 +22,16 @@ hero.querySelector('.scroll-note')?.remove();
 hero.querySelector('.music-card')?.before(recipient);
 hero.querySelector('.music-card')?.after(openButton);
 cover.append(hero);
+const playerFix = document.createElement('link');
+playerFix.rel = 'stylesheet';
+playerFix.href = 'player-fix.css';
+document.head.append(playerFix);
 // User-supplied soundtrack. Start at 00:49 after opening the invitation.
 const MUSIC_URL = 'assets/romansa-from-49.mp3';
 const audio = $('#audio');
 audio.src = MUSIC_URL; // File is already trimmed to the original 00:49. No seeking needed.
+audio.autoplay = true;
+audio.preload = 'auto';
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3000);}
 async function playMusic(){try{await audio.play();}catch{autoplayBlocked=true;}}
 let autoplayBlocked = false;
@@ -55,16 +61,19 @@ $('#open').addEventListener('click',()=>{
 });
 function syncPlayer(){document.querySelector('.music-card').classList.toggle('is-playing',!audio.paused);}
 audio.addEventListener('play',syncPlayer);audio.addEventListener('pause',syncPlayer);
-document.querySelector('#music').addEventListener('click',()=>{if(audio.paused){autoplayBlocked=false;audio.play().catch(()=>{autoplayBlocked=true;syncPlayer();});}else{audio.pause();}});
+let manuallyPaused = false;
+document.querySelector('#music').addEventListener('click',()=>{if(audio.paused){manuallyPaused=false;autoplayBlocked=false;audio.play().catch(()=>{autoplayBlocked=true;syncPlayer();});}else{manuallyPaused=true;audio.pause();}});
 // Respect browser autoplay policy; retry only on a real first user gesture.
 audio.play().then(()=>{autoplayBlocked=false;}).catch(()=>{autoplayBlocked=true;syncPlayer();});
 function startOnGesture(event){
-  if(!autoplayBlocked)return;
+  if(manuallyPaused || !audio.paused || event.target.closest?.('#music'))return;
   autoplayBlocked=false;
   audio.play().catch(()=>{autoplayBlocked=true;syncPlayer();});
 }
 document.addEventListener('pointerdown',startOnGesture,{capture:true});
 document.addEventListener('keydown',startOnGesture,{capture:true});
+document.addEventListener('touchend',startOnGesture,{capture:true,passive:true});
+document.addEventListener('click',startOnGesture,{capture:true});
 audio.addEventListener('timeupdate',()=>{const t=49+Math.floor(audio.currentTime);$('#elapsed').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');$('#music-progress').style.width=(audio.duration?audio.currentTime/audio.duration*100:0)+'%';});
 audio.addEventListener('error',()=>{toast('Musik belum dapat dimuat. Coba muat ulang halaman.');syncPlayer();});
 $('#name').addEventListener('input',()=>$('#name').setCustomValidity(''));

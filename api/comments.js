@@ -4,7 +4,7 @@ const key = 'mei-najih:comments';
 async function redis(command) {
   const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
-  if (!url || !token) throw new Error('Database not configured');
+  if (!url || !token) throw Object.assign(new Error('Database not configured'), {code:'DATABASE_NOT_CONFIGURED'});
   const response = await fetch(url, {method:'POST', headers:{Authorization:`Bearer ${token}`, 'Content-Type':'application/json'}, body:JSON.stringify(command), signal:AbortSignal.timeout(8000)});
   const data = await response.json();
   if (!response.ok || data.error) throw new Error('Database request failed');
@@ -29,7 +29,9 @@ module.exports = async (req, res) => {
     const script="local old=redis.call('GET',KEYS[2]); if old then return old end; redis.call('ZADD',KEYS[1],ARGV[1],ARGV[2]); redis.call('SET',KEYS[2],ARGV[2],'EX',604800); return ARGV[2]";
     const saved=await redis(['EVAL',script,2,key,`${key}:request:${body.requestId}`,Date.now(),JSON.stringify(comment)]);
     return res.status(201).json({comment:JSON.parse(saved)});
-  } catch {
-    return res.status(503).json({error:'Buku tamu belum dapat terhubung. Silakan coba lagi sebentar; tulisanmu tetap tersimpan di formulir.'});
+  } catch (error) {
+    const code = error.code === 'DATABASE_NOT_CONFIGURED' ? error.code : 'DATABASE_UNAVAILABLE';
+    console.error('Guestbook database status:', code);
+    return res.status(503).json({code,error:code === 'DATABASE_NOT_CONFIGURED' ? 'Buku tamu belum diaktifkan oleh pemilik undangan. Ucapanmu belum terkirim.' : 'Buku tamu sedang tidak dapat terhubung. Ucapanmu belum terkirim; silakan coba lagi.'});
   }
 };
