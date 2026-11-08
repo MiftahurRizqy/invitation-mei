@@ -65,7 +65,9 @@ function syncPlayer(){
   const button = $('#music');
   button.setAttribute('aria-label',playing ? 'Jeda musik' : 'Putar musik');
   button.title = playing ? 'Jeda musik' : 'Putar musik';
-  button.querySelector('path').setAttribute('d',playing ? 'M8 6v12M16 6v12' : 'M7 5L18 12L7 19Z');
+  button.innerHTML = playing
+    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>'
+    : '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="7,4 20,12 7,20"/></svg>';
 }
 audio.addEventListener('play',syncPlayer);audio.addEventListener('pause',syncPlayer);
 let manuallyPaused = false;
