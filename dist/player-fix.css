@@ -1,7 +1,7 @@
 .sealed .hero .music-card #music{opacity:1;pointer-events:auto}
-.cover>#home .music-card #music{position:relative;inset:auto;transform:none;translate:none;align-self:center;margin:0;z-index:10;opacity:1;pointer-events:auto;min-width:44px;min-height:44px;touch-action:manipulation}
+.cover>#home .music-card #music{position:relative;inset:auto;transform:none;translate:none;align-self:center;margin:0;z-index:10;opacity:1;pointer-events:auto;width:30px;height:30px;min-width:30px;min-height:30px;flex-basis:30px;touch-action:manipulation}
 .cover>#home .music-card #music{background:#f1e9d2;border:1px solid #f1e9d2;color:#8d3034;flex-shrink:0;box-shadow:0 2px 5px #43131833}
-.cover>#home .music-card #music svg{display:block;width:22px;height:22px;opacity:1;visibility:visible;color:#8d3034;fill:#8d3034;pointer-events:none}
+.cover>#home .music-card #music svg{display:block;width:15px;height:15px;opacity:1;visibility:visible;color:#8d3034;fill:#8d3034;pointer-events:none}
 .cover>#home .music-card #music svg rect,.cover>#home .music-card #music svg polygon{fill:#8d3034;stroke:none}
 .cover>#home .music-card #music svg path{d:revert;fill:none;stroke:currentColor;stroke-width:2.3}
 .cover>#home .music-card:not(.is-playing) #music svg path{fill:currentColor;stroke:none}
