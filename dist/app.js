@@ -54,6 +54,7 @@ function introCurtain(){
 }
 introCurtain();
 $('#open').addEventListener('click',()=>{
+  if(audio.paused && !manuallyPaused) playMusic();
   $('#invitation').inert=false;
   document.body.classList.remove('sealed');
   $('#intro').tabIndex=-1;$('#intro').focus({preventScroll:true});
@@ -79,20 +80,11 @@ document.querySelector('#music').addEventListener('click',event=>{
 });
 // Respect browser autoplay policy; retry only on a real first user gesture.
 audio.play().then(()=>{autoplayBlocked=false;}).catch(()=>{autoplayBlocked=true;syncPlayer();});
-function startOnGesture(event){
-  if(manuallyPaused || !audio.paused || event.target.closest?.('#music'))return;
-  autoplayBlocked=false;
-  audio.play().catch(()=>{autoplayBlocked=true;syncPlayer();});
-}
-document.addEventListener('pointerdown',startOnGesture,{capture:true});
-document.addEventListener('keydown',startOnGesture,{capture:true});
-document.addEventListener('touchend',startOnGesture,{capture:true,passive:true});
-document.addEventListener('click',startOnGesture,{capture:true});
 audio.addEventListener('timeupdate',()=>{const t=49+Math.floor(audio.currentTime);$('#elapsed').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');$('#music-progress').style.width=(audio.duration?audio.currentTime/audio.duration*100:0)+'%';});
 syncPlayer();
 audio.addEventListener('error',()=>{toast('Musik belum dapat dimuat. Coba muat ulang halaman.');syncPlayer();});
 $('#name').addEventListener('input',()=>$('#name').setCustomValidity(''));
-$('#copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText('0621849743');toast('Nomor rekening berhasil disalin');}catch{const input=document.createElement('textarea');input.value='0621849743';document.body.append(input);input.select();const copied=document.execCommand('copy');input.remove();toast(copied?'Nomor rekening berhasil disalin':'Nomor rekening: 0621849743');}});
+document.querySelectorAll('[data-account]').forEach(button => button.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(button.dataset.account);toast('Nomor rekening berhasil disalin');}catch{const input=document.createElement('textarea');input.value=button.dataset.account;document.body.append(input);input.select();const copied=document.execCommand('copy');input.remove();toast(copied?'Nomor rekening berhasil disalin':'Nomor rekening: '+button.dataset.account);}}));
 const dates=[new Date('2026-11-30T13:00:00+07:00'),new Date('2026-12-05T13:00:00+07:00')];
 function updateCountdown(){const now=Date.now();const index=now<dates[0]?0:1;const remaining=Math.max(0,dates[index]-now);$('#count-label').textContent=remaining?(index?'MENUJU HARI RESEPSI':'MENUJU HARI AKAD'):'TERIMA KASIH ATAS DOA & RESTUNYA';const seconds=Math.floor(remaining/1000);const values=[Math.floor(seconds/86400),Math.floor(seconds/3600)%24,Math.floor(seconds/60)%60,seconds%60];$('#countdown').innerHTML=values.map((n,i)=>`<div><strong>${String(n).padStart(2,'0')}</strong><span>${['HARI','JAM','MENIT','DETIK'][i]}</span></div>`).join('');}
 updateCountdown();setInterval(updateCountdown,1000);
