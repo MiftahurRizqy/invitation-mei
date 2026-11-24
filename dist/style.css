@@ -125,4 +125,3 @@ html,body{max-width:100%;overflow-x:hidden}.cover{overflow-x:hidden}.cover>#home
 .cover>#home .recipient{display:flex;align-items:baseline;justify-content:center;gap:6px;margin:2px auto 6px;position:relative;z-index:6}.cover>#home .recipient>span{font:15px var(--script);color:var(--olive)}.cover>#home .recipient strong{font:17px var(--hand);font-weight:400;max-width:190px;overflow-wrap:anywhere}.cover>#home .music-card{margin-top:4px}@media(max-height:800px){.cover>#home .recipient{margin:-1px auto 4px}.cover>#home .recipient>span{font-size:14px}.cover>#home .recipient strong{font-size:16px}.cover>#home .music-card{margin-top:3px}}
 
 .bank-card + .bank-card{margin-top:1rem}
-.bank-card p.gift-address{font:inherit;letter-spacing:normal;line-height:1.6}
