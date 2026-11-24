@@ -11,23 +11,29 @@ document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
 // The opening is the couple section itself: it appears once, before the invitation is opened.
 const cover = $('#cover');
 const hero = $('#home');
+const openButton = $('#open');
 const recipient = cover.querySelector('.recipient');
 recipient.querySelector('span').textContent = 'Kepada:';
 recipient.style.flexDirection = 'column';
 recipient.style.alignItems = 'center';
 recipient.style.gap = '0';
 recipient.style.textAlign = 'center';
+hero.querySelector('.scroll-note')?.remove();
 hero.querySelector('.music-card')?.before(recipient);
+hero.querySelector('.music-card')?.after(openButton);
 cover.append(hero);
 const playerFix = document.createElement('link');
 playerFix.rel = 'stylesheet';
 playerFix.href = 'player-fix.css';
 document.head.append(playerFix);
 // User-supplied soundtrack. Start at 00:49 after opening the invitation.
+const MUSIC_URL = 'assets/romansa-from-49.mp3';
 const audio = $('#audio');
+audio.src = MUSIC_URL; // File is already trimmed to the original 00:49. No seeking needed.
 audio.autoplay = true;
 audio.preload = 'auto';
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3000);}
+async function playMusic(){try{await audio.play();}catch{autoplayBlocked=true;}}
 let autoplayBlocked = false;
 const curtain = $('#curtain');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -47,6 +53,13 @@ function introCurtain(){
   setTimeout(finishCurtain,6500);
 }
 introCurtain();
+$('#open').addEventListener('click',()=>{
+  if(audio.paused && !manuallyPaused) playMusic();
+  $('#invitation').inert=false;
+  document.body.classList.remove('sealed');
+  $('#intro').tabIndex=-1;$('#intro').focus({preventScroll:true});
+  window.scrollTo({top:$('#intro').getBoundingClientRect().top+window.scrollY,behavior:reducedMotion?'instant':'smooth'});
+});
 function syncPlayer(){
   const playing = !audio.paused;
   document.querySelector('.music-card').classList.toggle('is-playing',playing);
